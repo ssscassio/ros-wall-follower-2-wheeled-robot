@@ -8,6 +8,8 @@
   
   <xacro:include filename="$(find m2wr_description)/urdf/macro.xacro" />
 
+  <xacro:cylinder_inertia mass="1" r="0.05" l="0.1" />
+  
   <link name="link_chassis">
     <!-- pose and inertial -->
     <pose>0 0 0.1 0 0 0</pose>
