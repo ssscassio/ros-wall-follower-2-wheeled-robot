@@ -116,10 +116,7 @@ def take_action():
     #print direction
     state_description = ''
 
-    rotate_sequence_V1 = ['I', 'C', 'C', 'C']
-    rotate_sequence_V2 = [0, 'C', 'C', 'C']
-    rotate_sequence_W = ['I', 'C', 'I', 'C']
-
+    rotate_sequence = ['I', 'C', 'I', 'C']
     if rotating == 1:
         #print 'Keep rotating'
         state_description = 'case 2 - keep rotationg'
@@ -129,10 +126,10 @@ def take_action():
     elif regions['fright'] == inf and regions['front'] == inf and regions['right'] == inf and regions['bright'] == inf and regions['fleft'] == inf and regions['left'] == inf and regions['bleft'] == inf and wall_found == 0:
         state_description = 'case 1 - nothing'
         change_state(0)
-    elif (loop_index == loop_index_corner) and (rotate_sequence_V1 == state_corner_inner or rotate_sequence_V2 == state_corner_inner or rotate_sequence_W == state_corner_inner):
+    elif (loop_index == loop_index_corner) and (rotate_sequence == state_corner_inner):
         #print 'Start rotating'
         change_direction()
-        state_corner_inner = [ 0, 0,  0, 'C']
+        state_corner_inner = [ 0, 0, 0, 'C']
         change_state(3)
     else:
         state_description = 'There is a Wall'
@@ -154,7 +151,7 @@ def take_action():
     print '\n'
     lenAux = len(state_corner_inner)
     print lenAux
-    for key_state in range(0, lenAux):
+    for key_state in range(0, state_corner_inner_length):
         print state_corner_inner[key_state],
     print '\n'
 
