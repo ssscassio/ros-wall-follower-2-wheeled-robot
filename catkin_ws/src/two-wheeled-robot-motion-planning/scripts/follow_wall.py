@@ -126,7 +126,7 @@ def take_action():
         change_state(3)
         if(regions['left'] < wall_dist or regions['right'] < wall_dist):
             rotating = 0
-    elif regions['fright'] == inf and regions['front'] == inf and regions['right'] == inf and regions['bright'] == inf and regions['fleft'] == inf and regions['left'] == inf and regions['bleft'] == inf and wall_found == 0:
+    elif regions['fright'] == inf and regions['front'] == inf and regions['right'] == inf and regions['bright'] == inf and regions['fleft'] == inf and regions['left'] == inf and regions['bleft'] == inf:
         state_description = 'case 1 - nothing'
         change_state(0)
     elif (loop_index == loop_index_corner) and (rotate_sequence_V1 == state_corner_inner or rotate_sequence_V2 == state_corner_inner or rotate_sequence_W == state_corner_inner):
@@ -137,7 +137,6 @@ def take_action():
     else:
         state_description = 'There is a Wall'
         change_state(1)
-        wall_found = 1
     #print state_description
 
     #rospy.loginfo(regions)
@@ -154,28 +153,26 @@ def take_action():
     print '\n'
     lenAux = len(state_corner_inner)
     print lenAux
-    for key_state in range(0, lenAux):
-        print state_corner_inner[key_state],
-    print '\n'
+    #for key_state in range(0, lenAux):
+    #    print state_corner_inner[key_state],
+    #print '\n'
 
 def find_wall():
     global direction, last_vel, x
     x = x + 1
     msg = Twist()
-    #msg.linear.x = last_vel[0] +0.0003
-    #msg.angular.z= -0.3
-    msg.linear.x = max(min( last_vel[0] + random.uniform(-0.01,0.01),0.3),0)
-    msg.angular.z= max(min( last_vel[1] + random.uniform(-0.1,0.1),0.3),-0.3)
+    msg.linear.x = max(min( last_vel[0] + random.uniform(-0.01,0.01),0.3),0.1)
+    msg.angular.z= max(min( last_vel[1] + random.uniform(-0.1,0.1),1),-1)
+    if msg.angular.z == 1 or msg.angular.z == -1:
+        msg.angular.z = 0
     last_vel[0] = msg.linear.x
     last_vel[1] = msg.angular.z
-    #print 'Find Wall - linear, angular %f - %f' %(msg.linear.x, msg.angular.z)
+    print 'Find Wall - linear, angular %f - %f' %(msg.linear.x, msg.angular.z)
     return msg
 
 def PD_wallFollowing():
     global wall_dist, max_speed, direction, p, d, angle, dist_min, dist_front, e, diff_e, angle_min
     msg = Twist()
-    #print '%f %f'%(e, diff_e)
-
     if dist_front < wall_dist:
         msg.linear.x = 0
     elif dist_front < wall_dist*2:
@@ -185,8 +182,7 @@ def PD_wallFollowing():
     else:
         msg.linear.x = max_speed
     #print 'e, diff_e, angle, angle_min %s  - %s - %s - %s ' % ( e, diff_e, angle, angle_min)
-    #msg.angular.z = 0.3
-    msg.angular.z = max(min(direction*(p*e+d*diff_e) + angle*(angle_min-((math.pi)/2)*direction), 2.5), -2.5)
+    msg.angular.z = max(min(direction*(p*e+d*diff_e) + angle*(angle_min-((math.pi)/2)*direction), 5), -5)
     #print 'Turn Left angular z, linear x %f - %f' % (msg.angular.z, msg.linear.x)
     return msg
 
