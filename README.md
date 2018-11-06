@@ -63,7 +63,7 @@ catkin_make
 ```
 ## Running the tests
 
-To run the tests it will be necessary to use 3 different terminals. Follow the steps starting at project folder's root.
+To run the tests it will be necessary to use 3 different terminals. Follow the steps starting at project root folder.
 
 ### First Terminal
 *Do not close this terminal*
