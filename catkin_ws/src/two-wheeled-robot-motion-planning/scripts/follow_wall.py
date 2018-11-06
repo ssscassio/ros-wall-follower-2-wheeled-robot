@@ -13,6 +13,9 @@ import math
 import time
 
 hz = 20 #Cycle Frequency
+loop_index = 0
+loop_index_corner = 0
+loop_index_v_angle = 0
 inf = 5
 wall_dist = 0.5    # Distance from the wall (0.13)
 max_speed = 0.3
@@ -44,8 +47,8 @@ list_state=[0, 0, 0, 0, 0]
 list_state_length = 5
 index = 0
 
-state_corner_inner=[0, 0, 0, 0]
-state_corner_inner_length = 4
+state_corner_inner=[0, 0, 0]
+state_corner_inner_length = 3
 index_state_corner_inner = 0
 
 bool_corner = 0
@@ -102,7 +105,7 @@ def change_state(state):
         state_ = state
 
 def take_action():
-    global regions_, inner, index, list_state, index_state_corner_inner, state_corner_inner_length
+    global regions_, inner, index, list_state, index_state_corner_inner, state_corner_inner_length, state_corner_inner, loop_index, loop_index_corner, loop_index_v_angle
     global wall_dist, max_speed, direction, p, d, angle, dist_min, line, inner, wall_found, rotating, bool_corner, bool_v_angle
 
     regions = regions_
@@ -113,7 +116,7 @@ def take_action():
     #print direction
     state_description = ''
 
-    rotate_sequence = [ 'I', 'C', 'C', 'C']
+    rotate_sequence = ['C', 'C', 'C']
     if rotating == 1:
         #print 'Keep rotating'
         state_description = 'case 2 - keep rotationg'
@@ -123,9 +126,10 @@ def take_action():
     elif regions['fright'] == inf and regions['front'] == inf and regions['right'] == inf and regions['bright'] == inf and regions['fleft'] == inf and regions['left'] == inf and regions['bleft'] == inf and wall_found == 0:
         state_description = 'case 1 - nothing'
         change_state(0)
-    elif (bool_corner == 1) and (rotate_sequence == state_corner_inner):
+    elif (loop_index == loop_index_corner) and (rotate_sequence == state_corner_inner):
         #print 'Start rotating'
         change_direction()
+        state_corner_inner = [ 0, 0, 'C']
         change_state(3)
     else:
         state_description = 'There is a Wall'
@@ -145,6 +149,8 @@ def take_action():
     for x in regionsAux:
         print x + ': ' + regionsAux[x] + '; ',
     print '\n'
+    lenAux = len(state_corner_inner)
+    print lenAux
     for key_state in range(0, state_corner_inner_length):
         print state_corner_inner[key_state],
     print '\n'
@@ -200,7 +206,7 @@ def go_back():
 
 
 def is_corner():
-    global regions_, list_state, list_state_length, last_corner_detection_time, index, state_corner_inner, index_state_corner_inner
+    global regions_, list_state, list_state_length, last_corner_detection_time, index, state_corner_inner, index_state_corner_inner, loop_index, loop_index_corner
     regions = regions_
     bool_corner = 0
     if (regions['fright'] == inf and regions['front'] == inf and regions['right'] == inf and regions['bright'] < inf  and regions['left'] == inf and regions['bleft'] == inf and regions['fleft'] == inf) or (regions['bleft'] < inf and regions['fleft'] == inf and regions['front'] == inf and regions['left'] == inf and regions['right'] == inf and regions['bright'] == inf and regions['fright'] == inf):
@@ -209,18 +215,19 @@ def is_corner():
         list_state[index]='C' # it is true that we are at the V
         elapsed_time = time.time() - last_corner_detection_time #Elapsed time since last corner detection
         #print 'index ... corner count %f   %s' %(index, list_state.count('C'))
-        if list_state.count('C')== list_state_length and elapsed_time >= 50:
+        if list_state.count('C')== list_state_length and elapsed_time >= 30:
             last_corner_detection_time = time.time()
-
-            state_corner_inner [index_state_corner_inner] = 'C'
-            index_state_corner_inner = index_state_corner_inner+1
-            if index_state_corner_inner == state_corner_inner_length:
-                index_state_corner_inner = 0
+            loop_index_corner = loop_index
+            state_corner_inner = state_corner_inner[1:]
+            state_corner_inner.append('C')
+            #index_state_corner_inner = index_state_corner_inner+1
+            #if index_state_corner_inner == state_corner_inner_length:
+            #    index_state_corner_inner = 0
             print 'CORNER'
     return bool_corner # bool is not corner
 
 def is_v_angle():
-    global regions_, wall_dist, list_state, list_state_length, last_v_angle_detection_time, index, state_corner_inner, index_state_corner_inner
+    global regions_, wall_dist, list_state, list_state_length, last_v_angle_detection_time, index, state_corner_inner, index_state_corner_inner, loop_index_v_angle, loop_index
     regions = regions_
     bool_v_angle = 0
     if regions['fright'] < wall_dist and regions['front'] < wall_dist and regions['fleft'] < wall_dist:
@@ -231,16 +238,18 @@ def is_v_angle():
         elapsed_time = time.time() - last_v_angle_detection_time #Elapsed time since last corner detection
         if list_state.count('I')==list_state_length and elapsed_time >= 20:
             last_v_angle_detection_time = time.time()
-
-            state_corner_inner [index_state_corner_inner] = 'I'
-            index_state_corner_inner = index_state_corner_inner+1
-            if index_state_corner_inner == state_corner_inner_length:
-                index_state_corner_inner = 0
+            loop_index_v_angle = loop_index
+            state_corner_inner = state_corner_inner[1:]
+            state_corner_inner.append('I')
+            #state_corner_inner [index_state_corner_inner] = 'I'
+            #index_state_corner_inner = index_state_corner_inner+1
+            #if index_state_corner_inner == state_corner_inner_length:
+            #    index_state_corner_inner = 0
             print 'V_angle'
     return bool_v_angle #bool is not v_angle
 
 def main():
-    global pub_, active_, hz
+    global pub_, active_, hz, loop_index
     
     rospy.init_node('reading_laser')
     
@@ -251,6 +260,7 @@ def main():
     print 'Code is running'
     rate = rospy.Rate(hz)
     while not rospy.is_shutdown():
+        loop_index = loop_index + 1
         msg = Twist()
         if state_ == 0:
             msg = find_wall()
