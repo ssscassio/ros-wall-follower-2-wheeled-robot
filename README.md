@@ -1,16 +1,16 @@
 # Reactive wall following robot with laser scanner sensor
 
-This project implements a wall-following algorithm in python for an autonomous mobile 2 wheeled robot with a laser scanner sensor using the [Robot Operating System (ROS)](http://www.ros.org/) libraries and [Gazebo](http://gazebosim.org/) as simulator. The proposed wall-following algorithm makes a robot wander at random until a wall is found, then follows the wall - through an implemented proportional control to keep a constant distance from it - in the outside and inside of a “V" and "W" shaped wall, respectively.
+This project implements a wall-following algorithm in python for an autonomous mobile 2 wheeled robot with a laser scanner sensor using the [Robot Operating System (ROS)](http://www.ros.org/) libraries, [Gazebo](http://gazebosim.org/) as simulator and [Python](https://www.python.org/) as programming language. The proposed wall-following algorithm makes a robot wander at random until a wall is found, then follows the wall - through an implemented proportional control to keep a constant distance from it - in the outside and inside of a “V" and "W" shaped wall, respectively.
 
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Test Environment
-- ROS : Indigo
+- ROS: Indigo
 - Ubuntu: 14.04LTS
 - Python: 2.7.6
-(- Gazebo: 7.12.0)
+- (Gazebo: 7.12.0)
 
 ### Project structure
 
