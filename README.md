@@ -7,9 +7,10 @@ This project implements a wall-following algorithm in python for an autonomous m
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Test Environment
-- ROS : vx.xx.xx (Melodic)
-- Ubuntu: 18.04LTS
-- Python: 
+- ROS : Indigo
+- Ubuntu: 14.04LTS
+- Python: 2.7.6
+(- Gazebo: 7.12.0)
 
 ### Project structure
 
