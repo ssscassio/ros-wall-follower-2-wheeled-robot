@@ -46,7 +46,7 @@ These instructions will get you a copy of the project up and running on your loc
 
 After clone the project navigate to the project folder
 ```
-cd ros-wall-follower-2-wheeled-robot
+cd ros-wall-follower-2-wheeled-robot-master
 ```
 Navigate to Catkin Workspace and run `catkin_make`
 ```
@@ -110,7 +110,7 @@ rosrun two-wheeled-robot-motion-planning follow_wall.py
 
 * [ROS](http://www.ros.org/) - Set of software libraries and tools used to build the robot
 * [Gazebo](http://gazebosim.org/) - Tool used to simulation
-
+* [Python](https://www.python.org/) - Programming language
 
 ## Authors
 
