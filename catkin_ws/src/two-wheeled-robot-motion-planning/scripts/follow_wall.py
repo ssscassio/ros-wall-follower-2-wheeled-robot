@@ -58,17 +58,23 @@ last_vel = [random.uniform(0.1,0.3),  random.uniform(-0.3,0.3)]
 x = 0
 wall_found =0
 state_dict_ = {
-    0: 'find the wall',
-    1: 'follow the wall',
-    2: 'go back'
+    0: 'random wandering',
+    1: 'following wall',
+    2: 'rotating'
 }
 
+"""
+Read sensor messagens, and determine distance to each region. 
+Manipulates the values measured by the sensor.
+Callback function for the subscription to the publised Laser Scan values.
+"""
 def clbk_laser(msg):
     global regions_, e, angle_min, dist_front, diff_e, direction, bool_corner, bool_v_angle, index, list_state, list_state_length
     size = len(msg.ranges)
     min_index = size*(direction+1)/4
     max_index = size*(direction+3)/4
-
+    
+    # Determine values for PD control of distance and P control of angle
     for i in range(min_index, max_index):
         if msg.ranges[i] < msg.ranges[min_index] and msg.ranges[i] > 0.01:
             min_index = i
@@ -78,6 +84,7 @@ def clbk_laser(msg):
     diff_e = min((dist_min - wall_dist) - e, 100)
     e = min(dist_min - wall_dist, 100)
 
+    # Determination of minimum distances in each region
     regions_ = {
         'bright':  min(min(msg.ranges[0:143]), inf),
         'right': min(min(msg.ranges[144:287]), inf),
@@ -87,23 +94,37 @@ def clbk_laser(msg):
         'left':   min(min(msg.ranges[720:863]), inf),
         'bleft':   min(min(msg.ranges[864:1007]), inf),
     }
+    #rospy.loginfo(regions_)
+
+    # Detection of Outer and Inner corner
     bool_corner = is_corner()
     bool_v_angle = is_v_angle()
     if bool_corner == 0 and bool_v_angle == 0:
         list_state[index]=0
-
+    
+    # Indexing for last five pattern detection
+    # This is latter used for low pass filtering of the patterns
     index = index + 1 #5 samples recorded to asses if we are at the corner or not
     if index == list_state_length:
         index = 0
-
+        
     take_action()
 
+"""
+Update machine state
+"""
 def change_state(state):
     global state_, state_dict_
     if state is not state_:
         #print 'Wall follower - [%s] - %s' % (state, state_dict_[state])
         state_ = state
 
+"""
+State dispatch for the machine states in accordance with the active and inactive regions of the sensor.
+        State 0 No wall found - all regions infinite
+        State 1 Wall found - 
+        State 2
+"""
 def take_action():
     global regions_, inner, index, list_state, index_state_corner_inner, state_corner_inner_length, state_corner_inner, loop_index, loop_index_corner, loop_index_v_angle
     global wall_dist, max_speed, direction, p, d, angle, dist_min, line, inner, wall_found, rotating, bool_corner, bool_v_angle
@@ -115,50 +136,37 @@ def take_action():
 
     state_description = ''
 
+    # Patterns for rotating
     rotate_sequence_V1 = ['I', 'C', 'C', 'C']
     rotate_sequence_V2 = [0, 'C', 'C', 'C']
     rotate_sequence_W = ['I', 'C', 'I', 'C']
 
+    # State dispatcher
     if rotating == 1:
-        #print 'Keep rotating'
-        state_description = 'case 2 - keep rotationg'
+        state_description = 'case 2 - rotating'
         change_state(2)
         if(regions['left'] < wall_dist or regions['right'] < wall_dist):
             rotating = 0
     elif regions['fright'] == inf and regions['front'] == inf and regions['right'] == inf and regions['bright'] == inf and regions['fleft'] == inf and regions['left'] == inf and regions['bleft'] == inf:
-        state_description = 'case 1 - nothing'
+        state_description = 'case 0 - random wandering'
         change_state(0)
     elif (loop_index == loop_index_corner) and (rotate_sequence_V1 == state_corner_inner or rotate_sequence_V2 == state_corner_inner or rotate_sequence_W == state_corner_inner):
-        #print 'Start rotating'
+        state_description = 'case 2 - rotating'
         change_direction()
         state_corner_inner = [ 0, 0,  0, 'C']
         change_state(2)
     else:
-        state_description = 'There is a Wall'
+        state_description = 'case 1 - following wall'
         change_state(1)
-    #print state_description
-
-    #rospy.loginfo(regions)
-    regionsAux = regions_
-    for key in regions:
-       if regions[key] ==inf:
-           regionsAux[key]='inf'
-       elif regions[key] >= wall_dist:
-           regionsAux[key]= 'longe'
-       else:
-           regionsAux[key] = 'perto'
-    for x in regionsAux:
-        print x + ': ' + regionsAux[x] + '; ',
-    print '\n'
-    lenAux = len(state_corner_inner)
-    print lenAux
-    #for key_state in range(0, lenAux):
-    #    print state_corner_inner[key_state],
-    #print '\n'
-
-def find_wall():
-    global direction, last_vel, x
-    x = x + 1
+"""
+This fuction defines the linear.x and angular.z velocities for the random wandering of the robot.
+Returns:
+        Twist(): msg with angular and linear velocities to be published
+                msg.linear.x -> [0.1, 0.3]
+                msg.angular.z -> [-1, 1]
+"""
+def random_wandering():
+    global direction, last_vel
     msg = Twist()
     msg.linear.x = max(min( last_vel[0] + random.uniform(-0.01,0.01),0.3),0.1)
     msg.angular.z= max(min( last_vel[1] + random.uniform(-0.1,0.1),1),-1)
@@ -166,10 +174,16 @@ def find_wall():
         msg.angular.z = 0
     last_vel[0] = msg.linear.x
     last_vel[1] = msg.angular.z
-    print 'Find Wall - linear, angular %f - %f' %(msg.linear.x, msg.angular.z)
     return msg
 
-def PD_wallFollowing():
+"""
+PD control for the wall following state. 
+Returns:
+        Twist(): msg with angular and linear velocities to be published
+                msg.linear.x -> 0; 0.5max_speed; 0.4max_speed
+                msg.angular.z -> [-1, 1]
+"""
+def following_wall():
     global wall_dist, max_speed, direction, p, d, angle, dist_min, dist_front, e, diff_e, angle_min
     msg = Twist()
     if dist_front < wall_dist:
@@ -180,12 +194,13 @@ def PD_wallFollowing():
         msg.linear.x = 0.4*max_speed
     else:
         msg.linear.x = max_speed
-    #print 'e, diff_e, angle, angle_min %s  - %s - %s - %s ' % ( e, diff_e, angle, angle_min)
     msg.angular.z = max(min(direction*(p*e+d*diff_e) + angle*(angle_min-((math.pi)/2)*direction), 2.5), -2.5)
     #print 'Turn Left angular z, linear x %f - %f' % (msg.angular.z, msg.linear.x)
     return msg
 
-
+"""
+Chage direction state only if the previous one was 
+"""
 def change_direction():
     global direction, last_change_direction, rotating
     print 'Change direction!'
@@ -261,9 +276,9 @@ def main():
         loop_index = loop_index + 1
         msg = Twist()
         if state_ == 0:
-            msg = find_wall()
+            msg = random_wandering()
         elif state_ == 1:
-            msg = PD_wallFollowing()
+            msg = following_wall()
         elif state_ == 2:
             msg = go_back()
         else:
