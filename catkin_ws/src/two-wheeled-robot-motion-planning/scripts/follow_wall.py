@@ -12,28 +12,31 @@ import random
 import math
 import time
 
-hz = 20 #Cycle Frequency
-loop_index = 0
-loop_index_outer_corner = 0
-loop_index_inner_corner = 0
-inf = 5             # Limit to Laser sensor range on meters, all distances above this value is 
-                    #      considered out of sensor range
-wall_dist = 0.5     # Distance desired from the wall
-max_speed = 0.3     # Maximum speed of the robot on meters/seconds
-p = 15              # Proportional constant for controller  
-d = 0               # Derivative constant for controller 
-angle = 1           # Proportional constant for angle controller (just simple P controller)
-direction = -1      # 1 for wall on the left side of the robot (-1 for the right side)
-e = 0
-angle_min = 0       # Angle, at which was measured the shortest distance between the robot and a wall
-dist_front = 0
-diff_e = 0
-dist_min = 0
+hz = 20                     # Cycle Frequency
+loop_index = 0              # Number of sampling cycles
+loop_index_outer_corner = 0 # Loop index when the outer corner is detected
+loop_index_inner_corner = 0 # Loop index when the inner corner is detected
+inf = 5                     # Limit to Laser sensor range in meters, all distances above this value are 
+                            #      considered out of sensor range
+wall_dist = 0.5             # Distance desired from the wall
+max_speed = 0.3             # Maximum speed of the robot on meters/seconds
+p = 15                      # Proportional constant for controller  
+d = 0                       # Derivative constant for controller 
+angle = 1                   # Proportional constant for angle controller (just simple P controller)
+direction = -1              # 1 for wall on the left side of the robot (-1 for the right side)
+e = 0                       # Diference between current wall measurements and previous one
+angle_min = 0               # Angle, at which was measured the shortest distance between the robot and a wall
+dist_front = 0              # Measured front distance
+diff_e = 0                  # Difference between current error and previous one
+dist_min = 0                # Minimum measured distance
+
+# Time when the last outer corner; direction and inner corner were detected or changed.
 last_outer_corner_detection_time = time.time()
 last_change_direction_time = time.time()
 last_inner_corner_detection_time = time.time()
-rotating = 0
+rotating = 0 
 pub_ = None
+# Sensor regions
 regions_ = {
         'bright': 0,
         'right': 0,
@@ -41,7 +44,6 @@ regions_ = {
         'front': 0,
         'left': 0,
 }
-state_ = 0
 last_kinds_of_wall=[0, 0, 0, 0, 0]
 index = 0
 
@@ -53,6 +55,9 @@ bool_inner_corner =0
 line = 0
 last_vel = [random.uniform(0.1,0.3),  random.uniform(-0.3,0.3)]
 wall_found =0
+
+#Robot state machines
+state_ = 0
 state_dict_ = {
     0: 'random wandering',
     1: 'following wall',
@@ -122,7 +127,8 @@ def take_action():
             State 1 Wall found - Following Wall
             State 2 Pattern sequence reached - Rotating
     """
-    global regions_, index, last_kinds_of_wall, index_state_outer_inner, state_outer_inner, loop_index, loop_index_outer_corner, loop_index_inner_corner
+    global regions_, index, last_kinds_of_wall, index_state_outer_inner, state_outer_inner, loop_index, loop_index_outer_corner, 
+    
     global wall_dist, max_speed, direction, p, d, angle, dist_min, line, wall_found, rotating, bool_outer_corner, bool_inner_corner
 
     regions = regions_
@@ -196,7 +202,7 @@ def following_wall():
 
 def change_direction():
     """
-    Toggle direction that the robot will follow the wall
+    Toggle direction in which the robot will follow the wall
         1 for wall on the left side of the robot and -1 for the right side
     """
     global direction, last_change_direction, rotating
@@ -208,6 +214,13 @@ def change_direction():
         rotating = 1
 
 def rotating():
+    """
+    Rotation movement of the robot. 
+    Returns:
+            Twist(): msg with angular and linear velocities to be published
+                    msg.linear.x -> 0m/s
+                    msg.angular.z -> -2 or +2 rad/s
+    """
     global direction
     msg = Twist()
     msg.linear.x = 0
@@ -216,6 +229,15 @@ def rotating():
 
 
 def is_outer_corner():
+    """
+    Assessment of outer corner in the wall. 
+    If all the regions except for one of the back regions are infinite then we are in the presence of a possible corner.
+    If all the elements in last_kinds_of_wall are 'C' and the last time a real corner was detected is superior or equal to 30 seconds:
+        To state_outer_inner a 'C' is appended and 
+        The time is restart.
+    Returns:
+            bool_outer_corner: 0 if it is not a outer corner; 1 if it is a outer corner
+    """
     global regions_, last_kinds_of_wall, last_outer_corner_detection_time, index, state_outer_inner, index_state_outer_inner, loop_index, loop_index_outer_corner
     regions = regions_
     bool_outer_corner = 0
@@ -232,6 +254,15 @@ def is_outer_corner():
     return bool_outer_corner
 
 def is_inner_corner():
+    """
+    Assessment of inner corner in the wall. 
+    If the three front regions are inferior than the wall_dist.
+    If all the elements in last_kinds_of_wall are 'I' and the last time a real corner was detected is superior or equal to 20 seconds:
+        To state_outer_inner a 'I' is appended and 
+        The time is restart.
+    Returns:
+            bool_inner_corner: 0 if it is not a inner corner; 1 if it is a inner corner
+    """
     global regions_, wall_dist, last_kinds_of_wall, last_inner_corner_detection_time, index, state_outer_inner, index_state_outer_inner, loop_index_inner_corner, loop_index
     regions = regions_
     bool_inner_corner = 0
