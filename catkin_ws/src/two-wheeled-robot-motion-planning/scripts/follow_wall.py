@@ -42,7 +42,7 @@ regions_ = {
         'left': 0,
 }
 state_ = 0
-inner = 0 # TODO: Mudar para 0
+inner = 0
 list_state=[0, 0, 0, 0, 0]
 list_state_length = 5
 index = 0
@@ -54,13 +54,13 @@ index_state_corner_inner = 0
 bool_corner = 0
 bool_v_angle =0
 line = 0
-last_vel = [random.uniform(-0,0.3),  random.uniform(-0.3,0.3)]
+last_vel = [random.uniform(0.1,0.3),  random.uniform(-0.3,0.3)]
 x = 0
 wall_found =0
 state_dict_ = {
     0: 'find the wall',
     1: 'follow the wall',
-    3: 'go back'
+    2: 'go back'
 }
 
 def clbk_laser(msg):
@@ -112,8 +112,7 @@ def take_action():
     msg = Twist()
     linear_x = 0
     angular_z = 0
-    
-    #print direction
+
     state_description = ''
 
     rotate_sequence_V1 = ['I', 'C', 'C', 'C']
@@ -123,7 +122,7 @@ def take_action():
     if rotating == 1:
         #print 'Keep rotating'
         state_description = 'case 2 - keep rotationg'
-        change_state(3)
+        change_state(2)
         if(regions['left'] < wall_dist or regions['right'] < wall_dist):
             rotating = 0
     elif regions['fright'] == inf and regions['front'] == inf and regions['right'] == inf and regions['bright'] == inf and regions['fleft'] == inf and regions['left'] == inf and regions['bleft'] == inf:
@@ -133,7 +132,7 @@ def take_action():
         #print 'Start rotating'
         change_direction()
         state_corner_inner = [ 0, 0,  0, 'C']
-        change_state(3)
+        change_state(2)
     else:
         state_description = 'There is a Wall'
         change_state(1)
@@ -265,7 +264,7 @@ def main():
             msg = find_wall()
         elif state_ == 1:
             msg = PD_wallFollowing()
-        elif state_ == 3:
+        elif state_ == 2:
             msg = go_back()
         else:
             rospy.logerr('Unknown state!')
