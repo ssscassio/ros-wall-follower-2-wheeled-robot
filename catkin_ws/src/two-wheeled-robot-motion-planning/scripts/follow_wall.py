@@ -52,7 +52,7 @@ index_state_outer_inner = 0
 
 bool_outer_corner = 0
 bool_inner_corner =0
-line = 0
+
 last_vel = [random.uniform(0.1,0.3),  random.uniform(-0.3,0.3)]
 wall_found =0
 
@@ -129,7 +129,7 @@ def take_action():
     """
     global regions_, index, last_kinds_of_wall, index_state_outer_inner, state_outer_inner, loop_index, loop_index_outer_corner, 
     
-    global wall_dist, max_speed, direction, p, d, angle, dist_min, line, wall_found, rotating, bool_outer_corner, bool_inner_corner
+    global wall_dist, max_speed, direction, p, d, angle, dist_min, wall_found, rotating, bool_outer_corner, bool_inner_corner
 
     regions = regions_
     msg = Twist()
