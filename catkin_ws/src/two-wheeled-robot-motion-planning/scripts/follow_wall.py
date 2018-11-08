@@ -181,7 +181,7 @@ def PD_wallFollowing():
     else:
         msg.linear.x = max_speed
     #print 'e, diff_e, angle, angle_min %s  - %s - %s - %s ' % ( e, diff_e, angle, angle_min)
-    msg.angular.z = max(min(direction*(p*e+d*diff_e) + angle*(angle_min-((math.pi)/2)*direction), 5), -5)
+    msg.angular.z = max(min(direction*(p*e+d*diff_e) + angle*(angle_min-((math.pi)/2)*direction), 2.5), -2.5)
     #print 'Turn Left angular z, linear x %f - %f' % (msg.angular.z, msg.linear.x)
     return msg
 
