@@ -127,7 +127,7 @@ def take_action():
             State 1 Wall found - Following Wall
             State 2 Pattern sequence reached - Rotating
     """
-    global regions_, index, last_kinds_of_wall, index_state_outer_inner, state_outer_inner, loop_index, loop_index_outer_corner, 
+    global regions_, index, last_kinds_of_wall, index_state_outer_inner, state_outer_inner, loop_index, loop_index_outer_corner
     
     global wall_dist, max_speed, direction, p, d, angle, dist_min, wall_found, rotating, bool_outer_corner, bool_inner_corner
 
